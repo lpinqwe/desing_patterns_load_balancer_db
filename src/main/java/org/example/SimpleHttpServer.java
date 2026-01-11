@@ -6,7 +6,7 @@ import com.sun.net.httpserver.HttpExchange;
 import org.example.factory.DbRequestFactory;
 import org.example.interfaces.DbResult;
 import org.example.interfaces.LoadBalancer;
-import org.example.objects.DbRequest;
+import org.example.interfaces.DbRequest;
 import org.example.utils.DbFailure;
 import org.example.utils.DbSuccess;
 

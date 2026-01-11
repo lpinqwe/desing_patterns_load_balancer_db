@@ -1,6 +1,6 @@
 package org.example.interfaces;
 
-import org.example.objects.DbRequest;
+import org.example.interfaces.DbRequest;
 
 public interface ExecutionEngine {
 

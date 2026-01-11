@@ -1,5 +1,6 @@
 package org.example.objects;
 
+import org.example.interfaces.DbRequest;
 import org.example.interfaces.RequestQueue;
 
 import java.util.concurrent.BlockingQueue;

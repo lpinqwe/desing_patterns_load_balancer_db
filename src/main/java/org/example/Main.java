@@ -24,12 +24,18 @@ public class Main {
 
             // 3. Создаём DbNode на этом пуле
             DbNode node = new SimpleDbNode("node1", pool);
+            DbNode node1 = new SimpleDbNode("node2", pool);
+            DbNode node2 = new SimpleDbNode("node3", pool);
+            DbNode node3 = new SimpleDbNode("node4", pool);
 
             // 4. TimeoutManager
             TimeoutManager tm = new ScheduledTimeoutManager(1);
 
             // 5. ExecutionEngine
-            ExecutionEngine engine = new DefaultExecutionEngine(node, tm);
+            ExecutionEngine engine = new DefaultExecutionEngine(node, tm)
+                    .addNode(node1)
+                    .addNode(node2)
+                    .build();
 
             // 6. Очередь и LoadBalancer
             RequestQueue queue = new FifoRequestQueue();

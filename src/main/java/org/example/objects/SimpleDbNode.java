@@ -15,6 +15,8 @@ public final class SimpleDbNode implements DbNode {
         this.pool = pool;
     }
 
+    public void init(){}
+
     @Override
     public boolean isAvailable() {
         return pool.available() > 0;

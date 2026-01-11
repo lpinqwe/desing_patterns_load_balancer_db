@@ -1,23 +1,45 @@
 package org.example.objects;
+import java.util.concurrent.*;
 
 import org.example.dto.RequestState;
-import org.example.interfaces.DbConnection;
-import org.example.interfaces.DbNode;
-import org.example.interfaces.ExecutionEngine;
-import org.example.interfaces.TimeoutManager;
+import org.example.interfaces.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class DefaultExecutionEngine implements ExecutionEngine {
 
-    private final DbNode node;
     private final TimeoutManager timeoutManager;
 
+    private final List<DbNode> nodes = new ArrayList<>();
+    public DefaultExecutionEngine addNode(DbNode node){
+        this.nodes.add(node);
+        return this;
+    }
+//todo доделать до билдера
+    //NOTE: оставил как есть
+    public DefaultExecutionEngine build(){
+        this.nodes.forEach(n -> ((SimpleDbNode)n).init());
+        return this;
+    }
+
+    //todo сделать балансировку
+    //complete
+    Map<DbNode, AtomicInteger> loaded = new ConcurrentHashMap<>();
     public DefaultExecutionEngine(DbNode node, TimeoutManager timeoutManager) {
-        this.node = node;
         this.timeoutManager = timeoutManager;
     }
 
+    public DbNode getMinLoadedNode() {
+        //get min from loaded
+        return null;
+    }
 
     @Override
     public boolean tryExecute(DbRequest request) {
@@ -26,14 +48,38 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
             return false;
         }
 
+        DbNode node = getMinLoadedNode();
+        assert node != null;
         DbConnection connection = node.acquire();
+
         if (connection == null) {
             request.transition(RequestState.EXECUTING, RequestState.QUEUED);
             return false;
         }
 
-        // Передаем ответственность за close() в execute
-        CompletableFuture.runAsync(() -> execute(request, connection));
+        loaded.compute(node, (n, counter) -> {
+            if (counter == null) counter = new AtomicInteger();
+            counter.incrementAndGet(); // +1
+            return counter;
+        });
+
+        CompletableFuture
+                .runAsync(() -> execute(request, connection))
+                .whenComplete((v, ex) -> {
+
+                    loaded.compute(node, (n, counter) -> {
+                        if (counter == null) return new AtomicInteger(0);
+                        counter.decrementAndGet(); // -1
+                        return counter;
+                    });
+
+                    node.release(connection);
+
+                    if (ex != null) {
+                        request.transition(RequestState.EXECUTING,
+                                RequestState.TIMED_OUT);
+                    }
+                });
 
         return true;
     }
@@ -65,7 +111,6 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
             timeoutManager.unregister(request);
         }
     }
-
 
 
 }
