@@ -1,0 +1,1 @@
+rootProject.name = "desing_patterns_load_balancer_db"
