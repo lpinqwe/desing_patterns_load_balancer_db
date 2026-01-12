@@ -26,7 +26,7 @@ public final class DefaultLoadBalancer implements LoadBalancer {
 
     @Override
     public void submit(DbRequest request) {
-        if (!request.transition(RequestState.CREATED, RequestState.QUEUED)) {
+        if (!request.enqueue()) {
             return;
         }
 
@@ -44,7 +44,7 @@ public final class DefaultLoadBalancer implements LoadBalancer {
         DbRequest request;
         while ((request = queue.poll()) != null) {
 
-            if (!request.transition(RequestState.QUEUED, RequestState.ASSIGNED)) {
+            if (!request.assign()) {
                 continue;
             }
 
@@ -52,7 +52,7 @@ public final class DefaultLoadBalancer implements LoadBalancer {
 
             if (!accepted) {
                 // нет ресурсов → вернуть в очередь
-                request.transition(RequestState.ASSIGNED, RequestState.QUEUED);
+                request.requeue();
                 queue.offer(request);
                 return;
             }

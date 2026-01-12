@@ -21,18 +21,22 @@ public final class ScheduledTimeoutManager implements TimeoutManager {
     public void register(DbRequest request) {
         long delayMillis = millisUntilDeadline(request);
         if (delayMillis <= 0) {
-            timeoutNow(request);
+            request.timeout();
             return;
         }
 
         ScheduledFuture<?> task = scheduler.schedule(
-                () -> onTimeout(request),
+                () -> {
+                    tasks.remove(request);
+                    request.timeout();
+                },
                 delayMillis,
                 TimeUnit.MILLISECONDS
         );
 
         tasks.put(request, task);
     }
+
 
     @Override
     public void unregister(DbRequest request) {
@@ -53,14 +57,9 @@ public final class ScheduledTimeoutManager implements TimeoutManager {
     }
 
     private void timeoutNow(DbRequest request) {
-        // Разрешаем таймаут ТОЛЬКО если ещё не начали выполнение
-        if (request.transition(RequestState.CREATED, RequestState.TIMED_OUT)
-                || request.transition(RequestState.QUEUED, RequestState.TIMED_OUT)
-                || request.transition(RequestState.ASSIGNED, RequestState.TIMED_OUT)) {
-
-            request.promise().completeTimeout();
-        }
+        request.timeout();
     }
+
 
     private long millisUntilDeadline(DbRequest request) {
         return request.getDeadline().toEpochMilli() - Instant.now().toEpochMilli();

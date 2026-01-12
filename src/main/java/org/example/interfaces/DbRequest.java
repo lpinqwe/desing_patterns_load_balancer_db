@@ -1,5 +1,5 @@
 package org.example.interfaces;
-import org.example.dto.RequestState;
+import org.example.states.RequestState;
 import org.example.utils.RequestPromise;
 
 import java.time.Instant;
@@ -9,6 +9,12 @@ public interface DbRequest {
     RequestPromise promise = new RequestPromise();
 
     String getSql();
+    boolean markExecuting();
+    boolean requeue();
+    void timeout();
+    boolean enqueue();
+    boolean assign();
+
 
     Instant getDeadline();
 

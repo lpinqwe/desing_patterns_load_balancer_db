@@ -64,9 +64,9 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
     }
 
     @Override
-    public boolean  tryExecute(DbRequest request) {
+    public boolean tryExecute(DbRequest request) {
 
-        if (!request.transition(RequestState.ASSIGNED, RequestState.EXECUTING)) {
+        if (!request.markExecuting()) {
             return false;
         }
 
@@ -75,17 +75,16 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
         DbConnection connection = node.acquire();
 
         if (connection == null) {
-            request.transition(RequestState.EXECUTING, RequestState.QUEUED);
+            request.requeue();
             return false;
         }
 
         loaded.compute(node, (n, counter) -> {
             if (counter == null) counter = new AtomicInteger();
-            counter.incrementAndGet(); // +1
+            counter.incrementAndGet();
             return counter;
         });
-        notifyObservers(node); // уведомляем
-
+        notifyObservers(node);
 
         CompletableFuture
                 .runAsync(() -> execute(request, connection))
@@ -93,22 +92,22 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
 
                     loaded.compute(node, (n, counter) -> {
                         if (counter == null) return new AtomicInteger(0);
-                        counter.decrementAndGet(); // -1
+                        counter.decrementAndGet();
                         return counter;
                     });
 
                     node.release(connection);
-                    notifyObservers(node); // уведомляем
+                    notifyObservers(node);
 
                     if (ex != null) {
-                        request.transition(RequestState.EXECUTING,
-                                RequestState.TIMED_OUT);
+                        request.timeout();
                     }
                 });
 
         return true;
     }
 
+    //NOTE: prewious realisation
 //    private void execute(DbRequest request, DbConnection connection) {
 //        try (connection) {
 //            Object result = connection.execute(request.getSql());
@@ -124,18 +123,38 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
 //        }
 //    }
 
-    private void execute(DbRequest request, DbConnection connection) {
-        try (connection) { // безопасно: connection закроется и вернется в пул после выполнения
-            Object result = connection.execute(request.getSql());
-            request.promise().completeSuccess(result);
-            request.transition(RequestState.EXECUTING, RequestState.COMPLETED);
-        } catch (Exception e) {
-            request.promise().completeFailure(e);
-            request.transition(RequestState.EXECUTING, RequestState.COMPLETED);
-        } finally {
-            timeoutManager.unregister(request);
-        }
+//    private void execute(DbRequest request, DbConnection connection) {
+//        try (connection) { // безопасно: connection закроется и вернется в пул после выполнения
+//            Object result = connection.execute(request.getSql());
+//            request.promise().completeSuccess(result);
+//            request.transition(RequestState.EXECUTING, RequestState.COMPLETED);
+//        } catch (Exception e) {
+//            request.promise().completeFailure(e);
+//            request.transition(RequestState.EXECUTING, RequestState.COMPLETED);
+//        } finally {
+//            timeoutManager.unregister(request);
+//        }
+//    }
+private void execute(DbRequest request, DbConnection connection) {
+    try (connection) {
+        Object result = connection.execute(request.getSql());
+        request.promise().completeSuccess(result);
+        request.transition(
+                request.getState(),
+                request.getState().onSuccess()
+        );
+    } catch (Exception e) {
+        request.promise().completeFailure(e);
+        request.transition(
+                request.getState(),
+                request.getState().onFailure()
+        );
+    } finally {
+        timeoutManager.unregister(request);
     }
+}
+
+
 
 
 }
