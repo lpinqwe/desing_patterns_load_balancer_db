@@ -13,8 +13,8 @@ public class LoadTestClient {
         //5 connections in db ==> Requests: 99980, Avg: 71,73 ms, Min: 13 ms, Max: 5017 ms
         //20 connections in db ==> Requests: 100000, Avg: 49,90 ms, Min: 3 ms, Max: 1140 ms
         //40 connections in db ==> Requests: 100000, Avg: 46,42 ms, Min: 3 ms, Max: 558 ms
-        int totalRequests = 100000; // общее количество запросов
-        int threads = 100;        // количество параллельных потоков
+        int totalRequests = 1000; // общее количество запросов
+        int threads = 10;        // количество параллельных потоков
         String urlString = "http://localhost:8080/query";
 
         ExecutorService executor = Executors.newFixedThreadPool(threads);

@@ -1,13 +1,12 @@
 package org.example.objects;
+import java.util.*;
 import java.util.concurrent.*;
 
 import org.example.dto.RequestState;
 import org.example.interfaces.*;
-import java.util.Map;
+
 import java.util.concurrent.ConcurrentHashMap;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -26,23 +25,46 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
     //NOTE: оставил как есть
     public DefaultExecutionEngine build(){
         this.nodes.forEach(n -> ((SimpleDbNode)n).init());
+        System.out.print("engine builded");
         return this;
     }
 
     //todo сделать балансировку
     //complete
     Map<DbNode, AtomicInteger> loaded = new ConcurrentHashMap<>();
-    public DefaultExecutionEngine(DbNode node, TimeoutManager timeoutManager) {
+    private final List<LoadObserver> observers = new CopyOnWriteArrayList<>();
+
+
+    public DefaultExecutionEngine( TimeoutManager timeoutManager) {
         this.timeoutManager = timeoutManager;
     }
 
     public DbNode getMinLoadedNode() {
-        //get min from loaded
-        return null;
+        if (nodes.isEmpty()) return null;
+
+        // Выбираем ноду с минимальной нагрузкой
+        return nodes.stream()
+                .min(Comparator.comparingInt(
+                        n -> loaded.getOrDefault(n, new AtomicInteger(0)).get()
+                ))
+                .orElse(null); // на случай пустого списка
+    }
+    // Добавляем подписчика
+    public DefaultExecutionEngine addObserver(LoadObserver observer) {
+        this.observers.add(observer);
+        return this;
+    }
+
+    // Метод уведомления
+    private void notifyObservers(DbNode node) {
+        int load = loaded.getOrDefault(node, new AtomicInteger(0)).get();
+        for (LoadObserver observer : observers) {
+            observer.onLoadChanged(node, load);
+        }
     }
 
     @Override
-    public boolean tryExecute(DbRequest request) {
+    public boolean  tryExecute(DbRequest request) {
 
         if (!request.transition(RequestState.ASSIGNED, RequestState.EXECUTING)) {
             return false;
@@ -62,6 +84,8 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
             counter.incrementAndGet(); // +1
             return counter;
         });
+        notifyObservers(node); // уведомляем
+
 
         CompletableFuture
                 .runAsync(() -> execute(request, connection))
@@ -74,6 +98,7 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
                     });
 
                     node.release(connection);
+                    notifyObservers(node); // уведомляем
 
                     if (ex != null) {
                         request.transition(RequestState.EXECUTING,

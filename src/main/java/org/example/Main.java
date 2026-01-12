@@ -16,7 +16,13 @@ public class Main {
 
             // 2. Создаём пул JDBC соединений
             JdbcConnectionPool pool = new JdbcConnectionPool(
-                    40,                              // размер пула
+                    4,                              // размер пула
+                    "jdbc:postgresql://localhost/postgres",
+                    "postgres",
+                    "postgres"
+            );
+            JdbcConnectionPool pool1 = new JdbcConnectionPool(
+                    4,                              // размер пула
                     "jdbc:postgresql://localhost/postgres",
                     "postgres",
                     "postgres"
@@ -24,17 +30,17 @@ public class Main {
 
             // 3. Создаём DbNode на этом пуле
             DbNode node = new SimpleDbNode("node1", pool);
-            DbNode node1 = new SimpleDbNode("node2", pool);
-            DbNode node2 = new SimpleDbNode("node3", pool);
-            DbNode node3 = new SimpleDbNode("node4", pool);
+            DbNode node1 = new SimpleDbNode("node2", pool1);
 
             // 4. TimeoutManager
             TimeoutManager tm = new ScheduledTimeoutManager(1);
 
             // 5. ExecutionEngine
-            ExecutionEngine engine = new DefaultExecutionEngine(node, tm)
+            ExecutionEngine engine = new DefaultExecutionEngine( tm)
+                    .addNode(node)
                     .addNode(node1)
-                    .addNode(node2)
+                    .addObserver((n, load) ->
+                    System.out.println("Node " + node + " load: " + load))
                     .build();
 
             // 6. Очередь и LoadBalancer
