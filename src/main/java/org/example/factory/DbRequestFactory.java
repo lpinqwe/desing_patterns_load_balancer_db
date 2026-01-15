@@ -6,8 +6,15 @@ import org.example.utils.RequestPromise;
 import java.time.Duration;
 import java.time.Instant;
 
-
 public final class DbRequestFactory implements FactoryPattern {
+
+/*
+* fACTORY pATTERN
+* DBRequest
+* DBRequestPattern
+* DbRequestImplementation
+* SimpleHttpServer
+* */
     @Override
     public DbRequest create(String sql, Duration timeout) {
         if (sql == null || sql.isBlank()) {
