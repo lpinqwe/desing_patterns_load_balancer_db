@@ -39,9 +39,13 @@ public class Main {
             ExecutionEngine engine = new DefaultExecutionEngine( tm)
                     .addNode(node)
                     .addNode(node1)
-                    .addObserver((n, load) ->
-                    System.out.println("Node " + node + " load: " + load))
+                    .withObserver((n, load) ->
+                            System.out.println("Node " + n.id() + " load: " + load))
                     .build();
+//            engine.addObserver((n, load) ->
+//                    System.out.println("Node " + n.id() + " load: " + load)
+//            );
+
 
             // 6. Очередь и LoadBalancer
             RequestQueue queue = new FifoRequestQueue();

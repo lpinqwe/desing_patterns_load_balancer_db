@@ -7,8 +7,8 @@ import java.time.Duration;
 import java.time.Instant;
 
 
-public final class DbRequestFactory {
-
+public final class DbRequestFactory implements FactoryPattern {
+    @Override
     public DbRequest create(String sql, Duration timeout) {
         if (sql == null || sql.isBlank()) {
             throw new IllegalArgumentException("SQL must not be empty");
@@ -22,6 +22,8 @@ public final class DbRequestFactory {
 
         return new DbRequestImplementation(sql, promise, deadline);
     }
+
+
 }
 
 

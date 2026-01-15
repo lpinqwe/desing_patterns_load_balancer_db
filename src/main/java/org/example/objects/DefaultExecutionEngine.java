@@ -2,14 +2,13 @@ package org.example.objects;
 import java.util.*;
 import java.util.concurrent.*;
 
-import org.example.dto.RequestState;
 import org.example.interfaces.*;
+import org.example.observer.LoadObserver;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class DefaultExecutionEngine implements ExecutionEngine {
@@ -17,6 +16,8 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
     private final TimeoutManager timeoutManager;
 
     private final List<DbNode> nodes = new ArrayList<>();
+    private final List<LoadObserver> observers = new CopyOnWriteArrayList<>();
+
     public DefaultExecutionEngine addNode(DbNode node){
         this.nodes.add(node);
         return this;
@@ -32,7 +33,6 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
     //todo сделать балансировку
     //complete
     Map<DbNode, AtomicInteger> loaded = new ConcurrentHashMap<>();
-    private final List<LoadObserver> observers = new CopyOnWriteArrayList<>();
 
 
     public DefaultExecutionEngine( TimeoutManager timeoutManager) {
@@ -49,11 +49,6 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
                 ))
                 .orElse(null); // на случай пустого списка
     }
-    // Добавляем подписчика
-    public DefaultExecutionEngine addObserver(LoadObserver observer) {
-        this.observers.add(observer);
-        return this;
-    }
 
     // Метод уведомления
     private void notifyObservers(DbNode node) {
@@ -61,6 +56,10 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
         for (LoadObserver observer : observers) {
             observer.onLoadChanged(node, load);
         }
+    }
+    public DefaultExecutionEngine withObserver(LoadObserver observer) {
+        observers.add(observer);
+        return this;
     }
 
     @Override
@@ -154,6 +153,19 @@ private void execute(DbRequest request, DbConnection connection) {
     }
 }
 
+
+
+
+    // Добавляем подписчика
+    @Override
+    public void addObserver(LoadObserver observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(LoadObserver observer) {
+        observers.remove(observer);
+    }
 
 
 

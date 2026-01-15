@@ -1,4 +1,6 @@
-package org.example.interfaces;
+package org.example.observer;
+
+import org.example.interfaces.DbNode;
 
 public interface LoadObserver {
 

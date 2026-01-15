@@ -1,6 +1,5 @@
 package org.example.objects;
 
-import org.example.dto.RequestState;
 import org.example.interfaces.*;
 
 import java.util.concurrent.ExecutorService;
