@@ -167,6 +167,10 @@ private void execute(DbRequest request, DbConnection connection) {
         observers.remove(observer);
     }
 
+    @Override
+    public int nodeCount() {
+        return nodes.size();
+    }
 
 
 }

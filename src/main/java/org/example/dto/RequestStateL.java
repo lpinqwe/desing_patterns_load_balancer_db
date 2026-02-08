@@ -1,5 +1,5 @@
 package org.example.dto;
-public enum RequestState {
+public enum RequestStateL {
     CREATED,
     QUEUED,
     ASSIGNED,

@@ -9,4 +9,6 @@ public interface ExecutionEngine extends LoadObservable {
     void addObserver(LoadObserver observer);
     void removeObserver(LoadObserver observer);
 
+    int nodeCount();
+
 }

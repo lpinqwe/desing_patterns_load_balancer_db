@@ -12,6 +12,11 @@ public final class DefaultLoadBalancer implements LoadBalancer {
     private final TimeoutManager timeoutManager;
     private final ExecutorService dispatcher;
 
+
+    public int getQueueLen(){
+
+        return this.queue.size();
+    }
     public DefaultLoadBalancer(
             RequestQueue queue,
             ExecutionEngine engine,

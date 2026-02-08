@@ -1,13 +1,17 @@
 package org.example.states;
 
-import java.util.Set;
-
-public final class CancelledState extends AbstractState {
+@Deprecated
+public final class CancelledState implements RequestState {
 
     public static final CancelledState INSTANCE = new CancelledState();
 
     private CancelledState() {
-        super("CANCELLED", Set.of());
+        //  super("CANCELLED", Set.of());
+    }
+
+    @Override
+    public boolean canTransitionTo(RequestState next) {
+        return false;
     }
 
     @Override
