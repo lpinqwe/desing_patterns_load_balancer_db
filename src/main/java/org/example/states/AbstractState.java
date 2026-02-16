@@ -1,7 +1,7 @@
 package org.example.states;
 
 import java.util.Set;
-
+@Deprecated
 abstract class AbstractState implements RequestState {
 
     private final String name;
