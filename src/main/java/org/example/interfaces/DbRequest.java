@@ -15,6 +15,7 @@ public interface DbRequest {
     boolean enqueue();
     boolean assign();
 
+    String getSessionId();
 
     Instant getDeadline();
 
@@ -31,4 +32,5 @@ public interface DbRequest {
     public RequestPromise promise() ;
 
 
+    void setSessionId(String sessionId);
 }

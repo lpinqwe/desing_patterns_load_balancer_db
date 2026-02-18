@@ -76,6 +76,18 @@ if (transition(current, next)) {
         return transition(current, current.onAssign());
     }
 
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    private  String sessionId;
+
+
+    @Override
+    public String getSessionId() {
+        return sessionId;
+    }
+
     @Override
     public boolean transition(RequestState expected, RequestState next) {
         if (!expected.canTransitionTo(next)) {
