@@ -13,7 +13,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-
+@Deprecated
 public class SimpleHttpServer {
 
     private final QueryGateway gateway;
@@ -41,8 +41,8 @@ public class SimpleHttpServer {
                 // sessionId можно передавать из заголовка, например "X-Session-Id"
                 String sessionId = exchange.getRequestHeaders().getFirst("X-Session-Id");
 
-                CompletableFuture<DbResult> future =
-                        gateway.execute(sql, sessionId,Duration.ofSeconds(5));
+                CompletableFuture<DbResult> future =null;
+                       // gateway.execute(sql, sessionId,Duration.ofSeconds(5));
 
                 future.whenComplete((result, ex) -> {
                     try {

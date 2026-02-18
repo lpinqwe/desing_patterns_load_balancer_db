@@ -1,5 +1,7 @@
 package org.example.utils;
 
+import org.example.ProxyConnection;
+import org.example.ProxyStatement;
 import org.example.interfaces.ConnectionPool;
 import org.example.interfaces.DbConnection;
 
@@ -7,7 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
+@Deprecated
 public final class JdbcDbConnection implements DbConnection {
 
     private final Connection conn;
@@ -34,6 +36,11 @@ public final class JdbcDbConnection implements DbConnection {
             }
             return null;
         }
+    }
+
+    @Override
+    public void setPCS_PSS(ProxyConnection.PCS pcs, ProxyStatement.ProxyStatementSettings pss) {
+
     }
 
     @Override

@@ -18,19 +18,27 @@ public class ProxyStatement implements Statement {
 
     private final QueryGateway gateway;
     private final String sessionId;
+    private final Connection connection;
     private CachedRowSet cachedResultSet;
-
-    public ProxyStatement(Statement delegate, QueryGateway gateway, String sessionId) {
-        this.delegate = delegate;
+    private ProxyStatementSettings pss;
+    
+    public ProxyStatement(Connection conn, QueryGateway gateway, String sessionId) {
+        this.connection = conn;
+        this.delegate = null;
         this.gateway = gateway;
         this.sessionId = sessionId;
+        this.pss = new ProxyStatementSettings();
     }
+    public class ProxyStatementSettings{
 
+        public String cursorName ="default";
+        public int fetchDirection = 1;
+    }
     @Override
     public boolean execute(String sql) throws SQLException {
         // 1. Перехватываем SQL и отправляем через LoadBalancer/QueryGateway
 
-        DbResult result = gateway.execute(sql, sessionId, Duration.ofSeconds(5)).join(); // блокируем для примера
+        DbResult result = gateway.execute(sql, sessionId, Duration.ofSeconds(5),pss,((ProxyConnection)connection).pcs).join(); // блокируем для примера
 
         // 2. Если запрос успешный
         if (result instanceof DbSuccess success) {
@@ -99,7 +107,7 @@ public class ProxyStatement implements Statement {
 
     @Override
     public int executeUpdate(String sql) throws SQLException {
-        DbResult result = gateway.execute(sql, sessionId, Duration.ofSeconds(5)).join();
+        DbResult result = gateway.execute(sql, sessionId, Duration.ofSeconds(5),pss,((ProxyConnection)connection).pcs).join();
         if (result instanceof DbSuccess success) {
             Object data = success.getData();
             if (data instanceof Integer count) {
@@ -132,7 +140,7 @@ public class ProxyStatement implements Statement {
 
     @Override
     public void close() throws SQLException {
-        delegate.close();
+
     }
 
     @Override
@@ -187,7 +195,8 @@ public class ProxyStatement implements Statement {
 
     @Override
     public void setCursorName(String name) throws SQLException {
-        delegate.setCursorName(name);
+        this.pss.cursorName=name;
+        //delegate.setCursorName(name);
     }
 
 //    @Override
@@ -207,7 +216,9 @@ public class ProxyStatement implements Statement {
 
     @Override
     public void setFetchDirection(int direction) throws SQLException {
-        delegate.setFetchDirection(direction);
+        this.pss.fetchDirection=direction;
+
+        //delegate.setFetchDirection(direction);
     }
 
     @Override
@@ -217,6 +228,7 @@ public class ProxyStatement implements Statement {
 
     @Override
     public void setFetchSize(int rows) throws SQLException {
+
         delegate.setFetchSize(rows);
     }
 

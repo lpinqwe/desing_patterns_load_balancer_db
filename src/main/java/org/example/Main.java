@@ -40,14 +40,18 @@ public class Main {
             System.out.println("facade ok");
             QueryGateway gateway = new DatabaseServerBuilder()
                     .withTimeoutThreads(1)
-                    .addNode("nodeMaster", 4, "jdbc:postgresql://localhost/postgres", "postgres", "postgres")
-                    .addNode("node2", 4, "jdbc:postgresql://localhost/postgres", "postgres", "postgres")
+                    .addNode("nodeMaster", 4, "jdbc:postgresql://127.0.0.1/postgres", "postgres", "postgres")
+                    .addNode("node2", 4, "jdbc:postgresql://127.0.0.1/postgres", "postgres", "postgres")
                     .withObserver((n, load) ->
                             System.out.println("Node " + n.id() + " load: " + load))
                     .withMetrics(facade)
                     .build();
             System.out.println("gateway ok");
-
+            //note:
+            //сделать транзакцию, откатить, сделать чтение -- проверка на отработку
+             //длительная транзакция -- сделать прочитать update потом прочитать сделать rollback,прочитать -- будет значение 1,2,1
+            //select for update -- вроде точно мастер
+            //длительные блокировки -- надеюсь не будет
             // регистрируем proxy driver
             DriverManager.registerDriver(new ProxyDriver(gateway));
             System.out.println("proxy ok");
@@ -56,6 +60,7 @@ public class Main {
                     DriverManager.getConnection("jdbc:proxy://localhost");
             System.out.println("proxy JDCB");
             Statement stmt = conn.createStatement();
+
 
             System.out.println(stmt.execute("SELECT 1"));
             boolean hasResultSet = stmt.execute("SELECT 1");

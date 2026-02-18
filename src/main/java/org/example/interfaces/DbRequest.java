@@ -1,4 +1,6 @@
 package org.example.interfaces;
+import org.example.ProxyConnection;
+import org.example.ProxyStatement;
 import org.example.states.RequestState;
 import org.example.utils.RequestPromise;
 
@@ -7,7 +9,10 @@ import java.util.concurrent.CompletableFuture;
 
 public interface DbRequest {
     RequestPromise promise = new RequestPromise();
-
+    void setProxySS(ProxyStatement.ProxyStatementSettings pss);
+    void setProxyCS(ProxyConnection.PCS pcs);
+    ProxyStatement.ProxyStatementSettings getPSS();
+    ProxyConnection.PCS getPCS();
     String getSql();
     boolean markExecuting();
     boolean requeue();

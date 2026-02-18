@@ -7,6 +7,12 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 
 public class ProxyConnection implements Connection {
+    PCS pcs;
+    public class PCS{
+        public String catalog = "catalog";
+        public boolean autoCommit = true;
+        public boolean readOnly =false;
+    }
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
         return delegate.prepareStatement(sql);
@@ -24,7 +30,8 @@ public class ProxyConnection implements Connection {
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        delegate.setAutoCommit(autoCommit);
+        //delegate.setAutoCommit(autoCommit);
+        this.pcs.autoCommit =autoCommit;
     }
 
     @Override
@@ -44,7 +51,6 @@ public class ProxyConnection implements Connection {
 
     @Override
     public void close() throws SQLException {
-        delegate.close();
     }
 
     @Override
@@ -59,7 +65,7 @@ public class ProxyConnection implements Connection {
 
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
-        delegate.setReadOnly(readOnly);
+        this.pcs.readOnly =readOnly;
     }
 
     @Override
@@ -69,7 +75,7 @@ public class ProxyConnection implements Connection {
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
-        delegate.setCatalog(catalog);
+        this.pcs.catalog = catalog;
     }
 
     @Override
@@ -307,10 +313,11 @@ public class ProxyConnection implements Connection {
     private String sessionId = UUID.randomUUID().toString();
     private final QueryGateway gateway;
 
-    public ProxyConnection(Connection delegate, QueryGateway gateway) {
-        this.delegate = delegate;
+    public ProxyConnection( QueryGateway gateway) {
+        this.delegate = null;
         this.gateway = gateway;
         this.sessionId = UUID.randomUUID().toString();
+        this.pcs = new PCS();
     }
 
     public String getSessionId() {
@@ -319,9 +326,9 @@ public class ProxyConnection implements Connection {
 
     @Override
     public Statement createStatement() throws SQLException {
-        Statement real = delegate.createStatement();
+        //Statement real = delegate.createStatement();
 
         // оборачиваем его в ProxyStatement
-        return new ProxyStatement(real, gateway, sessionId);
+        return new ProxyStatement( this,gateway, sessionId);
     }
 }

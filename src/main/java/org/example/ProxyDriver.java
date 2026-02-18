@@ -24,16 +24,10 @@ public class ProxyDriver extends Driver {
             throws SQLException {
 
         if (!acceptsURL(url)) return null;
+        Connection real = null;
 
-        // создаём реальный postgres connection
-        Connection real =
-                DriverManager.getConnection(
-                        "jdbc:postgresql://localhost/postgres",
-                        "postgres",
-                        "postgres"
-                );
 
-        return new ProxyConnection(real, gateway);
+        return new ProxyConnection( gateway);
     }
 
     @Override

@@ -21,11 +21,15 @@ public class QueryGateway {
 
     public CompletableFuture<DbResult> execute(String sql,
                                                String sessionId,
-                                               Duration timeout) {
+                                               Duration timeout,
+                                               ProxyStatement.ProxyStatementSettings pss,
+                                               ProxyConnection.PCS pcs
+    ) {
 
         DbRequest request = factory.create(sql, timeout);
-        request.setSessionId(sessionId); // если нужно
-
+        request.setSessionId(sessionId); //note
+        request.setProxySS(pss);
+        request.setProxyCS(pcs);
         loadBalancer.submit(request);
 
         return request.future();

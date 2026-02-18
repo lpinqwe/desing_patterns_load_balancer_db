@@ -1,5 +1,6 @@
 package org.example.objects;
 
+import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -168,8 +169,10 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
 
     private void execute(DbRequest request, DbConnection connection) {
         try (connection) {
-            Object result = connection.execute(request.getSql());
-            request.promise().completeSuccess(result);
+            connection.setPCS_PSS(request.getPCS(),request.getPSS());
+            Object resultSet = connection.execute(request.getSql());
+
+            request.promise().completeSuccess(resultSet);
             request.transition(
                     request.getState(),
                     request.getState().onSuccess()
@@ -179,7 +182,9 @@ public final class DefaultExecutionEngine implements ExecutionEngine {
             request.transition(
                     request.getState(),
                     request.getState().onFailure()
+
             );
+            request.requeue();
         } finally {
             timeoutManager.unregister(request);
         }
