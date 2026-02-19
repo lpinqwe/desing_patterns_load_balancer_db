@@ -43,17 +43,15 @@ public class Main {
                     .addNode("nodeMaster", 4, "jdbc:postgresql://127.0.0.1:5432/postgres", "postgres", "postgres")
                     .addNode("node2", 4, "jdbc:postgresql://127.0.0.1:5433/postgres", "postgres", "postgres")
                     .addNode("node3", 4, "jdbc:postgresql://127.0.0.1:5434/postgres", "postgres", "postgres")
-                    .withObserver((n, load) ->
-                            System.out.println("Node " + n.id() + " load: " + load))
                     .withMetrics(facade)
+                    .withObserver((n, load) ->
+                            System.out.println("Node " + n.id() + " load: " + load)
+                            //System.out.println("observer detect")
+                    )
+
                     .build();
             System.out.println("gateway ok");
-            //note:
-            //сделать транзакцию, откатить, сделать чтение -- проверка на отработку
-             //длительная транзакция -- сделать прочитать update потом прочитать сделать rollback,прочитать -- будет значение 1,2,1
-            //select for update -- вроде точно мастер
-            //длительные блокировки -- надеюсь не будет
-            // регистрируем proxy driver
+
             DriverManager.registerDriver(new ProxyDriver(gateway));
             System.out.println("proxy ok");
             // теперь используем как обычный JDBC

@@ -87,12 +87,21 @@ public class DatabaseServerBuilder {
 
     }
 
+    private List<LoadObserver> observers = new ArrayList<>();
+
     public DatabaseServerBuilder withObserver(LoadObserver observer) {
-        if (engine != null) {
-            engine.addObserver(observer);
+        if (observer != null) {
+            observers.add(observer);
         }
         return this;
     }
+
+//    public DatabaseServerBuilder withObserver(LoadObserver observer) {
+//        if (engine != null) {
+//            engine.addObserver(observer);
+//        }
+//        return this;
+//    }
 
     // --- Build all components ---
     public QueryGateway build() {
@@ -110,6 +119,7 @@ public class DatabaseServerBuilder {
 
         nodes.forEach(engineBuilder::addNode);
         engine = engineBuilder.build();
+        observers.forEach(engine::addObserver);
 
         queue = new FifoRequestQueue();
         loadBalancer = new DefaultLoadBalancer(queue, engine, timeoutManager);

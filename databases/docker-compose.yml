@@ -9,9 +9,10 @@ services:
       - "5432:5432"
     volumes:
       # Пробрасываем наш конфиг, чтобы мастер сразу всех пускал
-      - ./pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf
     command: >
       postgres 
+      -c hba_file=/etc/postgresql/pg_hba.conf
       -c wal_level=replica 
       -c max_wal_senders=10 
       -c max_replication_slots=10 
