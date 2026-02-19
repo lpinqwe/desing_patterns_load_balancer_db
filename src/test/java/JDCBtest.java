@@ -18,14 +18,10 @@ public class JDCBtest {
 
             QueryGateway gateway = new DatabaseServerBuilder()
                     .withTimeoutThreads(1)
-                    .addNode("nodeMaster", 4,
-                            "jdbc:postgresql://127.0.0.1/postgres",
-                            "postgres",
-                            "postgres")
-                    .addNode("nodeReplica", 4,
-                            "jdbc:postgresql://127.0.0.1/postgres",
-                            "postgres",
-                            "postgres")
+                    .addNode("nodeMaster", 4, "jdbc:postgresql://127.0.0.1:5432/postgres", "postgres", "postgres")
+                    .addNode("node2", 4, "jdbc:postgresql://127.0.0.1:5433/postgres", "postgres", "postgres")
+                    .addNode("node3", 4, "jdbc:postgresql://127.0.0.1:5434/postgres", "postgres", "postgres")
+
                     .withObserver((n, load) ->
                             System.out.println("Node " + n.id() + " load: " + load))
                     .withMetrics(facade)
