@@ -22,4 +22,9 @@ public final class ExecutingState implements RequestState {
     public RequestState onFailure() {
         return CompletedState.INSTANCE;
     }
+
+    @Override
+    public boolean isTimedOut() {
+        return false;
+    }
 }

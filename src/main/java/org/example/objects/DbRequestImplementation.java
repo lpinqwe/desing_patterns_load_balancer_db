@@ -1,5 +1,7 @@
 package org.example.objects;
 
+import org.example.ProxyConnection;
+import org.example.ProxyStatement;
 import org.example.states.RequestState;
 import org.example.interfaces.DbRequest;
 
@@ -20,11 +22,33 @@ public final class DbRequestImplementation implements DbRequest {
     private final Instant deadline;
     private final AtomicReference<RequestState> state =
             new AtomicReference<>(CreatedState.INSTANCE);
+    private ProxyConnection.PCS pcs;
+    private ProxyStatement.ProxyStatementSettings pss;
 
     public DbRequestImplementation(String sql, RequestPromise promise, Instant deadline) {
         this.sql = sql;
         this.promise = promise;
         this.deadline = deadline;
+    }
+
+    @Override
+    public void setProxySS(ProxyStatement.ProxyStatementSettings pss) {
+        this.pss=pss;
+    }
+
+    @Override
+    public void setProxyCS(ProxyConnection.PCS pcs) {
+        this.pcs=pcs;
+    }
+
+    @Override
+    public ProxyStatement.ProxyStatementSettings getPSS() {
+        return this.pss;
+    }
+
+    @Override
+    public ProxyConnection.PCS getPCS() {
+        return this.pcs;
     }
 
     public String getSql() {
@@ -74,6 +98,18 @@ if (transition(current, next)) {
     public boolean assign() {
         RequestState current = state.get();
         return transition(current, current.onAssign());
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    private  String sessionId;
+
+
+    @Override
+    public String getSessionId() {
+        return sessionId;
     }
 
     @Override

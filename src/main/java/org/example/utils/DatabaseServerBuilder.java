@@ -1,5 +1,6 @@
 package org.example.utils;
 
+import org.example.QueryGateway;
 import org.example.SimpleHttpServer;
 import org.example.builder.ExecutionEngineBuilder;
 import org.example.facade.FacadeMetrics;
@@ -86,46 +87,57 @@ public class DatabaseServerBuilder {
 
     }
 
+    private List<LoadObserver> observers = new ArrayList<>();
+
     public DatabaseServerBuilder withObserver(LoadObserver observer) {
-        if (engine != null) {
-            engine.addObserver(observer);
+        if (observer != null) {
+            observers.add(observer);
         }
         return this;
     }
 
+//    public DatabaseServerBuilder withObserver(LoadObserver observer) {
+//        if (engine != null) {
+//            engine.addObserver(observer);
+//        }
+//        return this;
+//    }
+
     // --- Build all components ---
-    public DatabaseServerBuilder build() {
+    public QueryGateway build() {
 
         if (countThreads < 1) {
             throw new IllegalStateException("countThreads must be >= 1");
         }
+
         this.buildNode();
 
         this.timeoutManager = new ScheduledTimeoutManager(countThreads);
 
-        // Execution engine
         ExecutionEngineBuilder engineBuilder = new ExecutionEngineBuilder()
                 .withTimeoutManager(timeoutManager);
 
         nodes.forEach(engineBuilder::addNode);
-
         engine = engineBuilder.build();
+        observers.forEach(engine::addObserver);
 
         queue = new FifoRequestQueue();
         loadBalancer = new DefaultLoadBalancer(queue, engine, timeoutManager);
         factory = new DbRequestFactory();
-        server = new SimpleHttpServer(factory, loadBalancer);
+
         if (facade != null) {
             this.facade.init(loadBalancer, engine);
         }
-        return this;
+
+        return new QueryGateway(factory, loadBalancer);  // <- возвращаем gateway
     }
+
 
     public void start() throws Exception {
         if (server == null) {
             throw new IllegalStateException("Server not built. Call build() first.");
         }
-        server.start(port);
+        server.start();
     }
 }
 

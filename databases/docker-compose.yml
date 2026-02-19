@@ -1,0 +1,47 @@
+services:
+  master:
+    image: postgres:15
+    container_name: pg-master
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - "5432:5432"
+    volumes:
+      # Пробрасываем наш конфиг, чтобы мастер сразу всех пускал
+      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf
+    command: >
+      postgres 
+      -c hba_file=/etc/postgresql/pg_hba.conf
+      -c wal_level=replica 
+      -c max_wal_senders=10 
+      -c max_replication_slots=10 
+      -c hot_standby=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  replica1: &replica
+    image: postgres:15
+    container_name: pg-replica1
+    ports:
+      - "5433:5432"
+    depends_on:
+      master:
+        condition: service_healthy
+    command: >
+      bash -c "
+      until pg_isready -h master -p 5432 -U postgres; do sleep 1; done;
+      rm -rf /var/lib/postgresql/data/*;
+      pg_basebackup -h master -D /var/lib/postgresql/data -U postgres -X stream -P -R;
+      chown -R postgres:postgres /var/lib/postgresql/data;
+      chmod 700 /var/lib/postgresql/data;
+      exec gosu postgres postgres"
+
+  replica2:
+    <<: *replica
+    container_name: pg-replica2
+    ports:
+      - "5434:5432"

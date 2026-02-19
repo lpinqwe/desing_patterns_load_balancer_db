@@ -13,6 +13,11 @@ public final class CreatedState implements RequestState {
     }
 
     @Override
+    public boolean isTimedOut() {
+        return false;
+    }
+
+    @Override
     public boolean canTransitionTo(RequestState next) {
         return next instanceof QueuedState
                 || next instanceof TimedOutState;

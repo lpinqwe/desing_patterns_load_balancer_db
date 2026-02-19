@@ -18,4 +18,9 @@ public final class CancelledState implements RequestState {
     public boolean isTerminal() {
         return true;
     }
+
+    @Override
+    public boolean isTimedOut() {
+        return false;
+    }
 }

@@ -3,49 +3,47 @@ package org.example;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
-import org.example.factory.DbRequestFactory;
+
 import org.example.interfaces.DbResult;
-import org.example.interfaces.LoadBalancer;
-import org.example.interfaces.DbRequest;
-import org.example.utils.DbFailure;
 import org.example.utils.DbSuccess;
+import org.example.utils.DbFailure;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-
+@Deprecated
 public class SimpleHttpServer {
 
-    private final DbRequestFactory factory;
-    private final LoadBalancer loadBalancer;
+    private final QueryGateway gateway;
+    private final int port;
 
-    public SimpleHttpServer(DbRequestFactory factory, LoadBalancer loadBalancer) {
-        this.factory = factory;
-        this.loadBalancer = loadBalancer;
+    public SimpleHttpServer(QueryGateway gateway, int port) {
+        this.gateway = gateway;
+        this.port = port;
     }
 
-    public void start(int port) throws IOException {
+    public void start() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
         server.createContext("/query", new HttpHandler() {
             @Override
             public void handle(HttpExchange exchange) throws IOException {
-                if (!"POST".equals(exchange.getRequestMethod())) {
+                if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                     exchange.sendResponseHeaders(405, -1);
                     return;
                 }
 
-                // читаем тело запроса как SQL строку
+                // читаем SQL из тела запроса
                 String sql = new String(exchange.getRequestBody().readAllBytes());
 
-                DbRequest request = factory.create(sql, Duration.ofSeconds(5));
-                loadBalancer.submit(request);
+                // sessionId можно передавать из заголовка, например "X-Session-Id"
+                String sessionId = exchange.getRequestHeaders().getFirst("X-Session-Id");
 
-                CompletableFuture<DbResult> future = request.future();
+                CompletableFuture<DbResult> future =null;
+                       // gateway.execute(sql, sessionId,Duration.ofSeconds(5));
 
-                // async response
                 future.whenComplete((result, ex) -> {
                     try {
                         String response;
@@ -63,6 +61,7 @@ public class SimpleHttpServer {
                         OutputStream os = exchange.getResponseBody();
                         os.write(response.getBytes());
                         os.close();
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -71,6 +70,6 @@ public class SimpleHttpServer {
         });
 
         server.start();
-        System.out.println("HTTP server started at port " + port);
+        System.out.println("HTTP Gateway Server started on port " + port);
     }
 }

@@ -24,4 +24,9 @@ public final class AssignedState implements RequestState {
     public RequestState onQueueBack() {
         return QueuedState.INSTANCE;
     }
+
+    @Override
+    public boolean isTimedOut() {
+        return false;
+    }
 }

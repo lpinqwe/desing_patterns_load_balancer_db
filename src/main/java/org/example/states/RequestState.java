@@ -40,4 +40,6 @@ public interface RequestState {
     default boolean isTerminal() {
         return false;
     }
+
+    boolean isTimedOut();
 }
